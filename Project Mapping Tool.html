@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Mapping Tool | Fernhollow Development (demo)</title>
+<link rel="icon" href="app/img/icon.png">
+<link rel="stylesheet" href="app/vendor/leaflet.min.css">
+<link rel="stylesheet" href="app/vendor/maplibre-gl.min.css">
+<link rel="stylesheet" href="app/css/app.css">
+</head>
+<body>
+<div id="app">
+  <!-- ============ Side panel ============ -->
+  <aside id="panel">
+    <header class="brand">
+      <img src="app/img/logo.png" alt="Fernhollow Development">
+      <h1>Project Mapping Tool</h1>
+    </header>
+
+    <div class="mapbar">
+      <div class="mapname">
+        <input id="mapName" type="text" aria-label="Map name" spellcheck="false">
+        <span id="saveState" class="savestate"></span>
+      </div>
+      <div class="row tight">
+        <button class="btn primary" id="btnSave" title="Save to this browser (Ctrl+S)"><span class="ms">save</span>Save</button>
+        <button class="btn" id="btnSaveFile" title="Save a copy as a file you can share or move"><span class="ms">download</span>Save to file</button>
+        <button class="btn ghost" id="btnNew" title="Start a new map"><span class="ms">add</span>New</button>
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button data-tab="site" class="on">Site</button>
+      <button data-tab="places">Places</button>
+      <button data-tab="basemap">Basemap</button>
+      <button data-tab="layers">Layers</button>
+      <button data-tab="maps">Maps</button>
+    </nav>
+
+    <div class="tabbody">
+      <!-- Site -->
+      <section class="tab on" id="tab-site">
+        <h3>Project site</h3>
+        <label class="field"><span>Site name</span><input id="siteName" type="text" placeholder="e.g. Foster Yards"></label>
+        <label class="field"><span>Label subtitle</span><input id="siteSub" type="text" placeholder="Development Site"></label>
+
+        <h3>Boundary or location</h3>
+        <div class="row">
+          <button class="btn" id="siteDraw"><span class="ms">polyline</span>Draw</button>
+          <button class="btn" id="sitePoint"><span class="ms">add_location_alt</span>Point</button>
+          <button class="btn" id="siteLoad"><span class="ms">upload_file</span>Load file</button>
+          <button class="btn" id="sitePasteBtn"><span class="ms">content_paste</span>Paste</button>
+        </div>
+        <div id="sitePaste" hidden style="margin-top:10px">
+          <textarea id="siteCoords" placeholder="One point, or the corners of the boundary, one per line:&#10;45.477142, -122.560037&#10;45.477142, -122.558243&#10;45.476238, -122.558243&#10;&#10;WKT (POLYGON ((...))) also works."></textarea>
+          <div class="row" style="margin-top:6px"><button class="btn primary" id="siteCoordsApply">Use these coordinates</button><button class="btn ghost" id="siteCoordsCancel">Cancel</button></div>
+        </div>
+        <div class="stat" id="siteStat"></div>
+        <div class="row" style="margin-top:8px"><button class="btn danger" id="siteClear" hidden><span class="ms">delete</span>Remove site</button></div>
+        <p class="note">Files: GeoJSON, Esri JSON (ArcGIS exports) or a coordinate list. Oregon State Plane, Oregon Lambert and UTM coordinates are converted automatically.</p>
+
+        <h3>Find an address</h3>
+        <div class="row tight"><input id="siteSearch" type="search" class="grow" placeholder="Address or place"><button class="btn" id="siteSearchBtn"><span class="ms">search</span></button></div>
+        <div class="results" id="siteResults"></div>
+
+        <h3>Boundary style</h3>
+        <div class="row" id="siteFill"></div>
+        <label class="field" style="margin-top:10px"><span>Fill opacity</span><input id="siteOpacity" type="range" min="0" max="1" step="0.05"></label>
+
+        <h3>Distance rings</h3>
+        <label class="field"><span>Radii in miles, separated by commas</span><input id="ringMiles" type="text" placeholder="0.25, 0.5, 1"></label>
+        <p class="note">Rings and place distances are measured in a straight line from the centre of the site.</p>
+      </section>
+
+      <!-- Places -->
+      <section class="tab" id="tab-places">
+        <div class="row">
+          <button class="btn primary" id="poiAdd"><span class="ms">add</span>Add place</button>
+          <button class="btn" id="poiLoad"><span class="ms">upload_file</span>Import file</button>
+          <button class="btn" id="poiPasteBtn"><span class="ms">content_paste</span>Paste list</button>
+        </div>
+        <div id="poiPaste" hidden style="margin-top:10px">
+          <textarea id="poiText" placeholder="One place per line: name, latitude, longitude, subtitle, icon&#10;Lents Park, 45.48738, -122.57046, Community park&#10;Kelly Elementary, 45.47305, -122.57024, Portland Public Schools, school"></textarea>
+          <p class="note">A header row (name, lat, lng, subtitle, icon) or text copied from Excel also works. Icons are guessed from the name when left blank.</p>
+          <div class="row"><button class="btn primary" id="poiPasteApply">Add places</button><button class="btn ghost" id="poiPasteCancel">Cancel</button></div>
+        </div>
+
+        <div id="poiForm" class="card alt" hidden style="margin-top:12px">
+          <h2 id="poiFormTitle">New place</h2>
+          <label class="field"><span>Name</span><input id="poiName" type="text"></label>
+          <label class="field"><span>Subtitle</span><input id="poiSub" type="text" placeholder="e.g. Neighborhood park"></label>
+          <label class="field"><span>Location (latitude, longitude)</span>
+            <div class="row tight"><input id="poiLL" type="text" class="grow" placeholder="45.4874, -122.5705"><button class="btn" id="poiPick" title="Click the map to place it"><span class="ms">my_location</span>Pick</button></div>
+          </label>
+          <div class="row tight"><input id="poiSearch" type="search" class="grow" placeholder="Search for an address or place"><button class="btn" id="poiSearchBtn"><span class="ms">search</span></button></div>
+          <div class="results" id="poiResults"></div>
+          <label class="field" style="margin-top:10px"><span>Icon</span></label>
+          <div class="icon-grid" id="iconGrid"></div>
+          <div class="icon-name" id="iconName"></div>
+          <label class="field" style="margin-top:10px"><span>Callout color</span></label>
+          <div class="bm-grid" id="poiStyle"></div>
+          <div class="row" style="margin-top:12px"><button class="btn primary" id="poiSave">Save place</button><button class="btn ghost" id="poiCancel">Cancel</button></div>
+        </div>
+
+        <h3 style="margin-top:20px">Places on this map <span id="poiCount"></span></h3>
+        <div class="list" id="poiList"></div>
+        <p class="note">Drag a callout to move its label. Double-click a callout to edit it.</p>
+
+        <h3>Callout color</h3>
+        <div class="bm-grid" id="calloutStyle"></div>
+        <p class="note">Applies to every place unless one has its own color (set it in Edit).</p>
+      </section>
+
+      <!-- Basemap -->
+      <section class="tab" id="tab-basemap">
+        <div id="bmList"></div>
+        <div id="shadeBox">
+          <h3>Imagery shading</h3>
+          <input id="shade" type="range" min="0" max="0.6" step="0.02">
+          <p class="note">Darkens satellite imagery so callouts stand out.</p>
+        </div>
+      </section>
+
+      <!-- Layers -->
+      <section class="tab" id="tab-layers">
+        <h3>Site</h3>
+        <div id="layersSite"></div>
+        <h3>Places</h3>
+        <div id="layersPlaces"></div>
+        <h3>Roads</h3>
+        <div id="layersRoads"></div>
+        <div class="stat" id="roadStatus"></div>
+        <h3>Map furniture</h3>
+        <div id="layersChrome"></div>
+      </section>
+
+      <!-- Maps -->
+      <section class="tab" id="tab-maps">
+        <div class="row">
+          <button class="btn" id="mapOpenFile"><span class="ms">folder_open</span>Open map file</button>
+        </div>
+        <h3 style="margin-top:20px">Demo maps</h3>
+        <div class="list" id="demoList"></div>
+        <p class="note">Five sample projects around Oregon. The project sites and Fernhollow Development are fictional; the nearby places are real.</p>
+        <h3 style="margin-top:20px">Saved in this browser</h3>
+        <div class="list" id="mapList"></div>
+        <p class="note">Maps saved here stay in this browser on this computer. Use <b>Save to file</b> to keep a copy you can back up, email or open on another computer.</p>
+      </section>
+    </div>
+  </aside>
+
+  <!-- ============ Map ============ -->
+  <main id="stage">
+    <div id="map"></div>
+    <div class="chrome toolbar">
+      <button id="tbFit" title="Zoom to the site and places"><span class="ms">fit_screen</span>Fit</button>
+      <button id="tbExport" title="Save the map as a PNG image"><span class="ms">image</span>Export PNG</button>
+      <button id="tbClean" title="Hide the controls for a screenshot (Esc to exit)"><span class="ms">photo_camera</span>Clean view</button>
+      <button id="tbPanel" title="Show or hide the side panel"><span class="ms">left_panel_close</span></button>
+    </div>
+    <div class="chrome modehint" id="modeHint"><span id="modeText"></span><span class="row tight" id="modeBtns"></span></div>
+    <div class="chrome north"><svg viewBox="0 0 18 22"><path d="M9 0 L18 22 L9 16 L0 22 Z"/></svg>N</div>
+    <img class="chrome map-logo dark" src="app/img/logo_white.png" alt="Fernhollow Development">
+    <img class="chrome map-logo light" src="app/img/logo.png" alt="Fernhollow Development">
+  </main>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="fileSite" accept=".geojson,.json,.txt,.csv" hidden>
+<input type="file" id="filePoi" accept=".geojson,.json,.txt,.csv,.tsv" hidden>
+<input type="file" id="fileMap" accept=".json,.pmap" hidden>
+
+<script src="app/vendor/leaflet.min.js"></script>
+<script src="app/vendor/maplibre-gl.min.js"></script>
+<script src="app/vendor/leaflet-maplibre-gl.js"></script>
+<script src="app/vendor/proj4.js"></script>
+<script src="app/js/geo.js"></script>
+<script src="app/js/icons.js"></script>
+<script src="app/js/basemaps.js"></script>
+<script src="app/js/roads.js"></script>
+<script src="app/js/export.js"></script>
+<script src="app/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+PMTRoads.tile("278_659",{"s":["OREGON COAST HWY","Oregon Department of Transportation","SEAVIEW LN","Curry County"],"f":[[0,1,0,[-12420854,4200064,19,-125,6,-89]],[2,3,2,[-12420842,4199990,238,-1,70,-4]]]});

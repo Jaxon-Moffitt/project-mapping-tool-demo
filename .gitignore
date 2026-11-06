@@ -1,0 +1,5 @@
+# 1.5 GB source data: too large for git. The app uses the tiles built from it in app/roads/.
+All_Public_Roads.geojson
+*.pmap.json
+# Single-file build output (python tools/build_single.py)
+dist/
